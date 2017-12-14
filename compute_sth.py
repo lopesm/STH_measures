@@ -1,8 +1,10 @@
 '''
-Scripts to compute spectro-temporal heterogeneity (STH) measures of grasslands clustered a priori using HDDC.
+Functions to compute spectro-temporal heterogeneity (STH) measures of grasslands clustered a priori using HDDC.
 '''
 
 import scipy as sp
+from pandas import DataFrame
+
 
 def compute_MDC(G):
     """Compute the mean distance to centroid MDC (or global variability, V) of the object.
@@ -61,4 +63,40 @@ def compute_E(PI):
         if PI_c > sp.finfo(sp.float64).eps:
             E += - PI_c * sp.log(PI_c)
             
-    return E                   
+    return E   
+
+
+def compute_4_STH_measures(X,ID,yp,T):
+    """Compute the 4 STH measures (MDC, intra- and inter-class variability, entropy) of a set of objects clustered by HDDC.
+    
+    Input:
+        - X (array): X of objects' pixels
+        - ID (vector): corresponding IDs of pixels
+        - yp (vector): predicted clusters of each pixel
+        - T (array): belongship probabilities of each pixel to each cluster
+        
+    Return:
+        - VAR (pandas data frame): data frame containing the 4 STH measures associated to each object
+    """  
+    
+    list_IDs = sp.unique(ID)
+    var = sp.zeros((list_IDs.size,4),'float')
+    for i,id_ in enumerate(list_IDs):
+        p = sp.where(ID==id_)[0]
+        G = X[p,:] #Grassland's pixels
+        Y = yp[p]  #Clusters of the pixels
+        PI = T[p,:] #Belongship probabilities of the pixels to each cluster
+        w,b = compute_W_B(G,Y)
+        #Log-transformed global variability
+        var[i,0] = sp.log(compute_MDC(G))
+        #Log-transformed intra-class variability
+        var[i,1] = sp.log(w)
+        #Log-transformed inter-class variability
+        var[i,2] = sp.log(b+1)
+        #Entropy
+        var[i,3] = compute_E(PI)
+    
+    #Save the 4 STH measures of all the grasslands in a pandas data frame
+    VAR = DataFrame(data=var,index=list_IDs,columns=["V","W","B","E"])
+    
+    return VAR

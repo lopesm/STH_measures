@@ -521,15 +521,6 @@ class HDGMM():
         """
         param = {'init':'kmeans','tol':0.00001,'C':C,'th':th}
         CRIT = Parallel(n_jobs=n_jobs,verbose=False)(delayed(worker_init)(i,x, M, param, criteria) for i in range(n_init))
-        #CRIT = sp.zeros((n_init))
-        #for i in range(n_init): #10 model initializations
-        #    param['random_state'] = i
-        #    model = HDGMM(model=M)
-        #    model.fit(x,param=param)
-        #    if criteria  == 'bic':
-        #        CRIT [i]=model.bic
-        #    elif criteria  == 'icl':
-        #        CRIT [i]=model.icl
 
         if criteria == "bic":
             t = sp.argmin(CRIT)
@@ -541,8 +532,6 @@ class HDGMM():
         param['random_state'] = t
         self.fit(x,param=param)
         
-        #return t
-
 def worker_init(i,x,M,param,criteria):
     """Parallel run of the same model but with different model initializations.
     Input:
